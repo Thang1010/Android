@@ -1,0 +1,57 @@
+name: face_attendance_flutter
+description: Ứng dụng điểm danh sinh viên bằng khuôn mặt
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Font & icon
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+
+  # HTTP & REST API
+  dio: ^5.4.0
+  http: ^1.2.1
+
+  # Quản lý trạng thái & dependency
+  provider: ^6.1.1
+  get_it: ^7.6.7
+
+  # Lưu token & biến môi trường
+  flutter_secure_storage: ^9.2.2
+  flutter_dotenv: ^5.1.0
+
+  # Routing
+  go_router: ^14.1.0
+
+  # Format & tiện ích
+  intl: ^0.19.0
+  fluttertoast: ^8.2.4
+
+  # Tính năng phần cứng
+  image_picker: ^1.0.7
+  qr_code_scanner:
+    git:
+      url: https://github.com/juliuscanute/qr_code_scanner.git
+      ref: master
+  path_provider: ^2.1.3
+  qr_flutter: ^4.1.0
+  fl_chart: ^1.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+    - .env
