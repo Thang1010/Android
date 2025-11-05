@@ -3,11 +3,11 @@
     final String ten;
     final String khoa;
     final String email;
-    final String sdt;
-    final String hocVi;
-    final String chuyenNganh;
-    final String gioiThieu;
-    final String avatarPath;
+    String sdt;
+    String hocVi;
+    String chuyenNganh;
+    String gioiThieu;
+    String avatarPath;
 
     GiangVien({
       required this.maGV,

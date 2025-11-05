@@ -49,7 +49,6 @@ class _LichDayScreenState extends State<LichDayScreen> {
   final List<String> weeks = List.generate(10, (index) => 'Tuần ${index + 1}');
   DateTime selectedDate = DateTime.now();
 
-  // Dữ liệu từ model
   late List<BuoiHoc> lichDayHomNay;
   List<BuoiHoc> displayedBuoiHoc = [];
   bool isFilteringByDate = true;
@@ -61,9 +60,7 @@ class _LichDayScreenState extends State<LichDayScreen> {
     years = [for (int start = 2020; start <= currentYear; start++) '$start-${start + 1}'];
     selectedYear = years.last;
 
-    // Lấy dữ liệu từ model
     lichDayHomNay = BuoiHoc.buoiHocMau;
-
     filterByDate(selectedDate);
   }
 
@@ -87,16 +84,24 @@ class _LichDayScreenState extends State<LichDayScreen> {
         b.tuan == selectedWeek)
         .toList();
 
-    // Cập nhật selectedDate theo ngày của buổi học đầu tiên (nếu có)
     if (displayedBuoiHoc.isNotEmpty) {
-      final firstDate = parseNgay(displayedBuoiHoc.first.ngay);
-      if (firstDate != null) selectedDate = firstDate;
+      final firstBuoi = parseNgay(displayedBuoiHoc.first.ngay)!;
+      final startOfWeek = getStartOfWeek(firstBuoi);
+      final endOfWeek = getEndOfWeek(firstBuoi);
+
+      // Highlight hôm nay nếu nằm trong tuần, hoặc ngày đầu tuần
+      final now = DateTime.now();
+      if (now.isAfter(startOfWeek.subtract(const Duration(days: 1))) &&
+          now.isBefore(endOfWeek.add(const Duration(days: 1)))) {
+        selectedDate = now;
+      } else {
+        selectedDate = startOfWeek;
+      }
     }
 
     setState(() {});
   }
 
-  // Helper parse String/DateTime sang DateTime
   DateTime? parseNgay(dynamic ngay) {
     if (ngay == null) return null;
     if (ngay is DateTime) return ngay;
@@ -110,28 +115,34 @@ class _LichDayScreenState extends State<LichDayScreen> {
     return null;
   }
 
+  Map<DateTime, List<BuoiHoc>> groupBuoiHocByDate(List<BuoiHoc> buoiHocList) {
+    final Map<DateTime, List<BuoiHoc>> grouped = {};
+    for (var b in buoiHocList) {
+      final date = parseNgay(b.ngay);
+      if (date == null) continue;
+      final key = DateTime(date.year, date.month, date.day);
+      if (!grouped.containsKey(key)) grouped[key] = [];
+      grouped[key]!.add(b);
+    }
+    final sortedKeys = grouped.keys.toList()..sort();
+    return {for (var k in sortedKeys) k: grouped[k]!};
+  }
+
+  DateTime getStartOfWeek(DateTime date) => date.subtract(Duration(days: date.weekday - 1));
+  DateTime getEndOfWeek(DateTime date) => getStartOfWeek(date).add(const Duration(days: 6));
+
   List<DateTime> generateCalendarDays(DateTime month) {
     final firstDayOfMonth = DateTime(month.year, month.month, 1);
-    final int daysInMonth = DateTime(month.year, month.month + 1, 0).day;
-    final int weekdayOfFirst = firstDayOfMonth.weekday;
-    final int leadingDays = weekdayOfFirst % 7;
+    final int startWeekday = firstDayOfMonth.weekday % 7;
+    final DateTime firstDisplayDay = firstDayOfMonth.subtract(Duration(days: startWeekday));
 
-    final prevMonth = DateTime(month.year, month.month, 0);
-    final int daysInPrevMonth = prevMonth.day;
-    List<DateTime> calendar = [];
+    return List.generate(28, (i) => firstDisplayDay.add(Duration(days: i)));
+  }
 
-    for (int i = leadingDays - 1; i >= 0; i--) {
-      calendar.add(DateTime(prevMonth.year, prevMonth.month, daysInPrevMonth - i));
-    }
-    for (int i = 1; i <= daysInMonth; i++) {
-      calendar.add(DateTime(month.year, month.month, i));
-    }
-    int nextDay = 1;
-    while (calendar.length < 42) {
-      calendar.add(DateTime(month.year, month.month + 1, nextDay));
-      nextDay++;
-    }
-    return calendar;
+  String getWeekRangeFromDate(DateTime anyDateInWeek) {
+    final start = getStartOfWeek(anyDateInWeek);
+    final end = getEndOfWeek(anyDateInWeek);
+    return "Từ ${start.day}/${start.month}/${start.year} đến ${end.day}/${end.month}/${end.year}";
   }
 
   @override
@@ -140,7 +151,7 @@ class _LichDayScreenState extends State<LichDayScreen> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: const Color(0xFFF0F0F0),
+      backgroundColor: Colors.white,
       drawer: GVSideMenu(
         giangVienId: widget.giangVienId,
         onClose: () => Navigator.pop(context),
@@ -209,64 +220,12 @@ class _LichDayScreenState extends State<LichDayScreen> {
                   style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF154B71)),
                   onPressed: filterByTermYearWeek,
-                  child:
-                  const Text("Lọc", style: TextStyle(color: Colors.white)),
+                  child: const Text("Lọc", style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
           ),
-          // --- Tháng / Năm ---
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.chevron_left, color: Color(0xFF154B71)),
-                  onPressed: () {
-                    setState(() {
-                      selectedDate =
-                          DateTime(selectedDate.year, selectedDate.month - 1, 1);
-                      if (isFilteringByDate) filterByDate(selectedDate);
-                    });
-                  },
-                ),
-                Text(
-                  "${selectedDate.month}/${selectedDate.year}",
-                  style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF154B71)),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right, color: Color(0xFF154B71)),
-                  onPressed: () {
-                    setState(() {
-                      selectedDate =
-                          DateTime(selectedDate.year, selectedDate.month + 1, 1);
-                      if (isFilteringByDate) filterByDate(selectedDate);
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-          // --- Thứ ---
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('T2'),
-                Text('T3'),
-                Text('T4'),
-                Text('T5'),
-                Text('T6'),
-                Text('T7'),
-                Text('CN'),
-              ],
-            ),
-          ),
+
           // --- Lịch tháng ---
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -289,8 +248,9 @@ class _LichDayScreenState extends State<LichDayScreen> {
                   onTap: () => filterByDate(day),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF154B71) : Colors.grey[200],
+                      color: isSelected ? const Color(0xFF154B71) : Colors.white,
                       borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey[300]!),
                     ),
                     alignment: Alignment.center,
                     child: Text(
@@ -307,46 +267,77 @@ class _LichDayScreenState extends State<LichDayScreen> {
               },
             ),
           ),
-          // --- Danh sách buổi học với Text "LỊCH HỌC" ---
-          Expanded(
-            child: displayedBuoiHoc.isEmpty
-                ? const Center(child: Text("Không có buổi học"))
-                : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+
+          // --- Text "Lịch học" ---
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
               children: [
-                Padding(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Text(
-                    'Lịch học',
-                    style: const TextStyle(
-                      fontSize: 20,
+                const Text(
+                  "Lịch học",
+                  style: TextStyle(
+                      fontSize: 25,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF154B71),
-                    ),
-                  ),
+                      color: Color(0xFF154B71)),
                 ),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: displayedBuoiHoc.length,
-                    itemBuilder: (context, index) {
-                      final b = displayedBuoiHoc[index];
-                      final ngayBuoiHoc = parseNgay(b.ngay);
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        child: ListTile(
-                          leading:
-                          const Icon(Icons.book, color: Color(0xFF154B71)),
-                          title: Text(b.tenMon),
-                          subtitle: Text(
-                              "${b.phong} | Thứ: ${getThu(ngayBuoiHoc)} | ${b.thoiGian ?? ''} | Lớp: ${b.lop}"),
-                        ),
-                      );
-                    },
+                const SizedBox(width: 8),
+                if (!isFilteringByDate && displayedBuoiHoc.isNotEmpty)
+                  Text(
+                    getWeekRangeFromDate(parseNgay(displayedBuoiHoc.first.ngay)!),
+                    style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.normal),
                   ),
-                ),
               ],
+            ),
+          ),
+
+          // --- Danh sách buổi học ---
+          Expanded(
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFFF0F0F0), // nền xám
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(45), // bo góc trên trái
+                ),
+              ),
+              padding: const EdgeInsets.all(8),
+              child: displayedBuoiHoc.isEmpty
+                  ? const Center(child: Text("Không có buổi học"))
+                  : ListView(
+                children: [
+                  for (var entry in groupBuoiHocByDate(displayedBuoiHoc).entries)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "${entry.key.day}/${entry.key.month}/${entry.key.year}",
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF154B71),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          for (var b in entry.value)
+                            Card(
+                              margin: const EdgeInsets.symmetric(vertical: 2),
+                              child: ListTile(
+                                leading: const Icon(Icons.book,
+                                    color: Color(0xFF154B71)),
+                                title: Text(b.tenMon),
+                                subtitle: Text(
+                                    "${b.phong} | Thứ: ${getThu(parseNgay(b.ngay))} | ${b.thoiGian ?? ''} | Lớp: ${b.lop}"),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ],

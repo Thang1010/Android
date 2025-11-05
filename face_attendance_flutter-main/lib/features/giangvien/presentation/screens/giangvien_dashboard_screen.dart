@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import '../../data/models/buoihoc_model.dart';
 import '../../data/models/giangvien_model.dart';
 import '../widgets/giangvien_bottom_nav.dart';
+import '../widgets/gv_side_menu.dart';
 import 'diemdanh_qr_screen.dart';
 import 'lichday_screen.dart';
 import 'quanlylop_screen.dart';
 import 'thongke_screen.dart';
-import 'thongtinlop_screen.dart';
 
 class GiangVienDashboardScreen extends StatefulWidget {
   const GiangVienDashboardScreen({super.key});
@@ -80,11 +80,19 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
       title: Stack(
         alignment: Alignment.center,
         children: [
+          // Logo có thể bấm mở Drawer
           Align(
             alignment: Alignment.centerLeft,
-            child: Image.asset(
-              'assets/images/login_illustration.png',
-              height: 36,
+            child: Builder(
+              builder: (context) {
+                return GestureDetector(
+                  onTap: () => Scaffold.of(context).openDrawer(),
+                  child: Image.asset(
+                    'assets/images/login_illustration.png',
+                    height: 36,
+                  ),
+                );
+              },
             ),
           ),
           const Center(
@@ -397,7 +405,6 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
                     ),
                   );
                 } else if (title == "Lịch dạy" || title == "Thống kê") {
-                  // Các screen đã khai báo sẵn
                   final screen = (title == "Lịch dạy")
                       ? const LichDayScreen(giangVienId: 'GV001')
                       : const ThongKeScreen(giangVienId: 'GV001');
@@ -425,9 +432,34 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
   // --- GIAO DIỆN CHÍNH ---
   @override
   Widget build(BuildContext context) {
+    // Lấy buổi học hiện tại cho Drawer
+    final BuoiHoc buoiHienTaiDrawer = lichDayHomNay.firstWhere(
+          (b) {
+        if (b.thoiGian == null || b.ngay == null) return false;
+        final times = _parseTimeRange(b.thoiGian!, b.ngay!);
+        if (times.length < 2) return false;
+        final now = DateTime.now();
+        return now.isAfter(times[0]) && now.isBefore(times[1]);
+      },
+      orElse: () => BuoiHoc(
+        tenMon: "Không có lớp diễn ra",
+        lop: "N/A",
+        phong: "N/A",
+        thoiGian: "N/A",
+        ngay: DateTime.now(),
+      ),
+    );
+
     return Scaffold(
       backgroundColor: const Color(0xFFF0F0F0),
       appBar: _buildHomeAppBar(),
+      drawer: GVSideMenu(
+        giangVienId: gvHienTai.maGV,
+        buoiHoc: buoiHienTaiDrawer,
+        onClose: () {
+          Navigator.of(context).pop();
+        },
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

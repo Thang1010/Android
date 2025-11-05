@@ -4,7 +4,7 @@ import '../../data/models/buoihoc_model.dart';
 
 class GVSideMenu extends StatelessWidget {
   final String giangVienId;
-  final BuoiHoc? buoiHoc; // Buổi học hiện tại cho Điểm danh QR
+  final BuoiHoc? buoiHoc;
   final VoidCallback onClose;
 
   const GVSideMenu({
@@ -21,7 +21,6 @@ class GVSideMenu extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Nút đóng
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Align(
@@ -34,17 +33,16 @@ class GVSideMenu extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Danh sách menu
             _buildMenuItem(context, Icons.home, "Trang chủ"),
             _buildMenuItem(context, Icons.calendar_today, "Lịch dạy"),
             _buildMenuItem(context, Icons.how_to_reg, "Điểm danh"),
             _buildMenuItem(context, Icons.class_, "Quản lý lớp"),
             _buildMenuItem(context, Icons.bar_chart, "Thống kê"),
             _buildMenuItem(context, Icons.person, "Tôi"),
+            _buildMenuItem(context, Icons.lock, "Đổi mật khẩu"),
 
             const Spacer(),
 
-            // Nút đăng xuất màu đỏ
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: ElevatedButton.icon(
@@ -79,10 +77,8 @@ class GVSideMenu extends StatelessWidget {
         ),
       ),
       onTap: () {
-        // Đóng Drawer
         onClose();
 
-        // Hàm điều hướng an toàn
         void safeNavigate(String routeName, {Map<String, dynamic>? arguments}) {
           GvRoutes.navigate(context, routeName, arguments: arguments);
         }
@@ -96,13 +92,11 @@ class GVSideMenu extends StatelessWidget {
             break;
           case "Điểm danh":
             if (buoiHoc != null) {
-              // Nếu có buoiHoc hiện tại, truyền vào QR screen
               safeNavigate(GvRoutes.diemdanhQR, arguments: {"buoiHoc": buoiHoc});
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                    content: Text(
-                        "Hiện không có buổi học đang diễn ra để điểm danh")),
+                    content: Text("Hiện không có buổi học đang diễn ra để điểm danh")),
               );
             }
             break;
@@ -114,6 +108,9 @@ class GVSideMenu extends StatelessWidget {
             break;
           case "Tôi":
             safeNavigate(GvRoutes.profile, arguments: {"giangVienId": giangVienId});
+            break;
+          case "Đổi mật khẩu":
+            safeNavigate(GvRoutes.doiMatKhau, arguments: {"giangVienId": giangVienId});
             break;
         }
       },
