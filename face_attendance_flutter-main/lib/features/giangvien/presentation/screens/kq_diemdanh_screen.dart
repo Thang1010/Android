@@ -1,20 +1,35 @@
 import 'package:flutter/material.dart';
 import '../widgets/giangvien_bottom_nav.dart';
 import '../../data/models/sinhvien_model.dart'; // model + dữ liệu
-import 'diemdanh_screen.dart'; // trang trước
+import '../../data/models/buoihoc_model.dart'; // model BuoiHoc
 
 class KetQuaDiemDanhScreen extends StatefulWidget {
-  final int currentTab; // tab hiện tại từ trang trước
+  final BuoiHoc buoiHoc; // Buổi học từ trang DiemDanhScreen
 
-  const KetQuaDiemDanhScreen({super.key, this.currentTab = 2});
+  const KetQuaDiemDanhScreen({super.key, required this.buoiHoc});
 
   @override
   State<KetQuaDiemDanhScreen> createState() => _KetQuaDiemDanhScreenState();
 }
 
 class _KetQuaDiemDanhScreenState extends State<KetQuaDiemDanhScreen> {
+  late List<SinhVien> danhSachSV;
+
+  @override
+  void initState() {
+    super.initState();
+    // Lấy danh sách sinh viên từ buổi học
+    danhSachSV = widget.buoiHoc.danhSachSinhVien;
+  }
+
   @override
   Widget build(BuildContext context) {
+    int totalSV = danhSachSV.length;
+    int coMat = danhSachSV
+        .where((sv) => sv.trangThai == 'present' || sv.trangThai == 'late')
+        .length;
+    int vang = danhSachSV.where((sv) => sv.trangThai == 'absent').length;
+
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -24,16 +39,29 @@ class _KetQuaDiemDanhScreenState extends State<KetQuaDiemDanhScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context); // quay lại trang trước
-          },
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          "Điểm danh buổi học",
+          "KẾT QUẢ ĐIỂM DANH",
           style: TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 17,
+          ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications, color: Colors.white),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Chức năng thông báo đang được phát triển..."),
+                ),
+              );
+            },
+          ),
+        ],
       ),
 
       // ===== BODY =====
@@ -57,27 +85,85 @@ class _KetQuaDiemDanhScreenState extends State<KetQuaDiemDanhScreen> {
                   ),
                 ],
               ),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Môn học: Lập trình Android",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                  SizedBox(height: 10),
-                  Text("Lớp: 64KTPM.NB",
-                      style: TextStyle(color: Colors.black87, fontSize: 14)),
-                  SizedBox(height: 10),
-                  Text("Thời gian: Thứ năm, 7:00 - 9:45",
-                      style: TextStyle(color: Colors.black87, fontSize: 14)),
-                  SizedBox(height: 10),
-                  Text("Phòng học: 325 - A2",
-                      style: TextStyle(color: Colors.black87, fontSize: 14)),
+                  Text("Môn học: ${widget.buoiHoc.tenMon}",
+                      style:
+                      const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  const SizedBox(height: 10),
+                  Text("Lớp: ${widget.buoiHoc.lop}",
+                      style: const TextStyle(color: Colors.black87, fontSize: 14)),
+                  const SizedBox(height: 10),
+                  Text("Thời gian: ${widget.buoiHoc.thoiGian ?? 'Chưa có'}",
+                      style: const TextStyle(color: Colors.black87, fontSize: 14)),
+                  const SizedBox(height: 10),
+                  Text("Phòng học: ${widget.buoiHoc.phong}",
+                      style: const TextStyle(color: Colors.black87, fontSize: 14)),
                 ],
               ),
             ),
 
             const SizedBox(height: 20),
 
-            // TRẠNG THÁI ĐIỂM DANH
+            // ==== Ô tóm tắt số sinh viên ====
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(right: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.green[100],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text(
+                          "Có mặt",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          "$coMat / $totalSV",
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(left: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.red[100],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text(
+                          "Vắng",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          "$vang / $totalSV",
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
             const Text(
               "Trạng thái điểm danh",
               style: TextStyle(
@@ -87,12 +173,12 @@ class _KetQuaDiemDanhScreenState extends State<KetQuaDiemDanhScreen> {
             ),
             const SizedBox(height: 10),
 
-            // DANH SÁCH SINH VIÊN
+            // ==== Danh sách sinh viên ====
             Expanded(
               child: ListView.builder(
-                itemCount: danhSachSinhVien.length,
+                itemCount: danhSachSV.length,
                 itemBuilder: (context, index) {
-                  final sv = danhSachSinhVien[index];
+                  final sv = danhSachSV[index];
                   return _buildStudentCard(
                     sv,
                         (newStatus) {
@@ -109,12 +195,8 @@ class _KetQuaDiemDanhScreenState extends State<KetQuaDiemDanhScreen> {
       ),
 
       // ===== BOTTOM NAV =====
-      bottomNavigationBar: GiangVienBottomNav(
-        currentIndex: widget.currentTab, // giữ tab Điểm danh
-        onTap: (index) {
-          // khi chọn tab khác, bạn có thể chuyển màn hình tương ứng
-          print("Chuyển sang tab $index");
-        },
+      bottomNavigationBar: const GiangVienBottomNav(
+        currentIndex: 2, // tab Điểm danh
       ),
     );
   }
@@ -129,7 +211,7 @@ class _KetQuaDiemDanhScreenState extends State<KetQuaDiemDanhScreen> {
       case "present":
         statusColor = Colors.green;
         statusIcon = Icons.check_circle;
-        statusText = "Có mặt";
+        statusText = "Đúng giờ";
         break;
       case "absent":
         statusColor = Colors.red;
@@ -211,7 +293,7 @@ class _KetQuaDiemDanhScreenState extends State<KetQuaDiemDanhScreen> {
                   onStatusChanged(value);
                 },
                 itemBuilder: (context) => const [
-                  PopupMenuItem(value: "present", child: Text("Có mặt")),
+                  PopupMenuItem(value: "present", child: Text("Đúng giờ")),
                   PopupMenuItem(value: "absent", child: Text("Vắng")),
                   PopupMenuItem(value: "late", child: Text("Đi muộn")),
                 ],

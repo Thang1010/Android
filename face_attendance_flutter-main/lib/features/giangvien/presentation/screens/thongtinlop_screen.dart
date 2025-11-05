@@ -16,6 +16,7 @@ class ThongTinLopScreen extends StatefulWidget {
 
 class _ThongTinLopScreenState extends State<ThongTinLopScreen> {
   int _selectedIndex = 3;
+  String _searchQuery = ''; // Từ khóa tìm kiếm
 
   void _onItemTapped(int index) {
     setState(() {
@@ -56,6 +57,11 @@ class _ThongTinLopScreenState extends State<ThongTinLopScreen> {
     final lop = widget.lop;
     final sinhVienCuaLop = lop.danhSachSinhVien;
 
+    // --- Lọc danh sách sinh viên theo từ khóa ---
+    final sinhVienLoc = sinhVienCuaLop
+        .where((sv) => sv.ten.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -68,10 +74,26 @@ class _ThongTinLopScreenState extends State<ThongTinLopScreen> {
         title: const Text(
           "THÔNG TIN LỚP HỌC",
           style: TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 17,
+          ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications, color: Colors.white),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Chức năng thông báo đang được phát triển..."),
+                ),
+              );
+            },
+          ),
+        ],
       ),
+
       body: Container(
         decoration: const BoxDecoration(
           color: Color(0xFFF0F0F0),
@@ -146,25 +168,87 @@ class _ThongTinLopScreenState extends State<ThongTinLopScreen> {
                     ),
 
                     const SizedBox(height: 16),
-                    const Text(
-                      "Danh sách sinh viên",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+
+                    // --- TIÊU ĐỀ + NÚT XUẤT EXCEL ---
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Danh sách sinh viên",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            // ✅ Chưa làm gì - chỉ hiển thị thông báo
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Tính năng xuất Excel đang được phát triển...',
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.file_download, size: 18),
+                          label: const Text(
+                            "Xuất Excel",
+                            style: TextStyle(fontSize: 13),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                            const Color(0xFF6FBF73), // ✅ Màu xanh nhạt hơn
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 2,
+                          ),
+                        ),
+                      ],
                     ),
+
                     const SizedBox(height: 8),
 
+                    // --- THANH TÌM KIẾM SINH VIÊN ---
+                    TextField(
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.search),
+                        hintText: 'Tìm kiếm sinh viên theo tên...',
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value;
+                        });
+                      },
+                    ),
+
+                    const SizedBox(height: 10),
+
                     // --- DANH SÁCH SINH VIÊN ---
-                    sinhVienCuaLop.isEmpty
-                        ? const Center(child: Text("Chưa có sinh viên trong lớp"))
+                    sinhVienLoc.isEmpty
+                        ? const Center(
+                        child: Text("Không tìm thấy sinh viên nào"))
                         : Column(
-                      children: sinhVienCuaLop.map((sv) {
-                        double tiLe =
-                        tiLeDiemDanhCuaSinhVien(sv, lop);
+                      children: sinhVienLoc.map((sv) {
+                        double tiLe = tiLeDiemDanhCuaSinhVien(sv, lop);
 
                         return InkWell(
                           onTap: () {
-                            // Tìm buổi học thực tế từ lịch đầy đủ
-                            final buoiThucTe = BuoiHoc.lichDayLichDayScreen.firstWhere(
-                                  (b) => b.tenMon == lop.tenMon && b.lop == lop.lop,
+                            final buoiThucTe =
+                            BuoiHoc.buoiHocMau.firstWhere(
+                                  (b) =>
+                              b.tenMon == lop.tenMon &&
+                                  b.lop == lop.lop,
                               orElse: () => BuoiHoc(
                                 tenMon: lop.tenMon,
                                 lop: lop.lop,
@@ -175,7 +259,9 @@ class _ThongTinLopScreenState extends State<ThongTinLopScreen> {
                               ),
                             );
 
-                            final diemDanhSV = buoiThucTe.diemDanhChiTietCuaSV[sv.ma] ?? [];
+                            final diemDanhSV =
+                                buoiThucTe.diemDanhChiTietCuaSV[sv.ma] ??
+                                    [];
 
                             Navigator.push(
                               context,
@@ -250,7 +336,6 @@ class _ThongTinLopScreenState extends State<ThongTinLopScreen> {
           ],
         ),
       ),
-
       bottomNavigationBar: GiangVienBottomNav(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

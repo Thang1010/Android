@@ -1,9 +1,75 @@
 import 'package:flutter/material.dart';
-import '../widgets/giangvien_bottom_nav.dart';
-import 'diemdanh_qr_screen.dart'; // import màn hình QR
-import '../widgets/gv_side_menu.dart'; // import Drawer menu
-import '../../data/models/monhoc_model.dart'; // import model + dữ liệu
+import 'diemdanh_qr_screen.dart';
 import 'kq_diemdanh_screen.dart';
+import '../widgets/giangvien_bottom_nav.dart';
+import '../widgets/gv_side_menu.dart';
+import '../../data/models/buoihoc_model.dart';
+
+// ===== ENUM TRẠNG THÁI BUỔI HỌC =====
+enum TrangThaiBuoiHoc { chuaDenGio, dangDienRa, ketThuc }
+
+// ===== EXTENSION CHO BuoiHoc =====
+extension BuoiHocStatus on BuoiHoc {
+  TrangThaiBuoiHoc get trangThai {
+    final now = DateTime.now();
+    if (ngay == null || thoiGian == null) return TrangThaiBuoiHoc.chuaDenGio;
+
+    final parts = thoiGian!.split(' - ');
+    if (parts.length != 2) return TrangThaiBuoiHoc.chuaDenGio;
+
+    final startParts = parts[0].split(':');
+    final endParts = parts[1].split(':');
+
+    final startTime = DateTime(
+      ngay!.year,
+      ngay!.month,
+      ngay!.day,
+      int.parse(startParts[0]),
+      int.parse(startParts[1]),
+    );
+    final endTime = DateTime(
+      ngay!.year,
+      ngay!.month,
+      ngay!.day,
+      int.parse(endParts[0]),
+      int.parse(endParts[1]),
+    );
+
+    if (now.isBefore(startTime)) return TrangThaiBuoiHoc.chuaDenGio;
+    if (now.isAfter(endTime)) return TrangThaiBuoiHoc.ketThuc;
+    return TrangThaiBuoiHoc.dangDienRa;
+  }
+}
+
+// ===== Hàm helper hiển thị thứ =====
+String getThu(DateTime? ngay) {
+  if (ngay == null) return "-";
+  switch (ngay.weekday) {
+    case DateTime.monday:
+      return "T2";
+    case DateTime.tuesday:
+      return "T3";
+    case DateTime.wednesday:
+      return "T4";
+    case DateTime.thursday:
+      return "T5";
+    case DateTime.friday:
+      return "T6";
+    case DateTime.saturday:
+      return "T7";
+    case DateTime.sunday:
+      return "CN";
+    default:
+      return "-";
+  }
+}
+
+// ===== Helper định dạng ngày =====
+String formatNgay(DateTime? ngay) {
+  if (ngay == null) return "-";
+  return "${ngay.day.toString().padLeft(2, '0')}/${ngay.month.toString().padLeft(2, '0')}/${ngay.year}";
+}
+
 class DiemDanhScreen extends StatefulWidget {
   const DiemDanhScreen({super.key});
 
@@ -17,11 +83,19 @@ class _DiemDanhScreenState extends State<DiemDanhScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final today = DateTime.now();
+
+    // Lọc chỉ các môn của hôm nay
+    final List<BuoiHoc> monHocHomNay = BuoiHoc.buoiHocMau.where((b) =>
+    b.ngay?.year == today.year &&
+        b.ngay?.month == today.month &&
+        b.ngay?.day == today.day).toList();
+
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.white,
       drawer: GVSideMenu(
-        giangVienId: 'GV001', // hoặc lấy từ state nếu cần
+        giangVienId: 'GV001',
         onClose: () => Navigator.pop(context),
       ),
       appBar: AppBar(
@@ -65,15 +139,13 @@ class _DiemDanhScreenState extends State<DiemDanhScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- PHẦN TIÊU ĐỀ ---
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(
-              "Môn hiện tại",
+              "Môn hôm nay",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ),
-          // --- DANH SÁCH MÔN HỌC ---
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -85,9 +157,11 @@ class _DiemDanhScreenState extends State<DiemDanhScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: ListView.builder(
-                  itemCount: danhSachMonHoc.length,
+                  itemCount: monHocHomNay.length,
                   itemBuilder: (context, index) {
-                    final mon = danhSachMonHoc[index];
+                    final mon = monHocHomNay[index];
+                    final ngayBuoiHoc = mon.ngay;
+
                     return Container(
                       margin: const EdgeInsets.symmetric(vertical: 8),
                       padding: const EdgeInsets.all(14),
@@ -105,19 +179,19 @@ class _DiemDanhScreenState extends State<DiemDanhScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            "${mon.tenMon} - ${mon.tenLop}",
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          // Tên môn - Lớp
+                          Text("${mon.tenMon} - ${mon.lop}",
+                              style: const TextStyle(
+                                  fontSize: 15, fontWeight: FontWeight.w600)),
                           const SizedBox(height: 6),
+                          // Thời gian: Thứ, Ngày, Giờ
                           Text(
-                            "Thứ ${mon.thu}, Tiết ${mon.tiet}",
+                            "Thời gian: ${getThu(ngayBuoiHoc)}, ${formatNgay(ngayBuoiHoc)} | ${mon.thoiGian ?? 'Chưa có'}",
                             style: const TextStyle(
                                 fontSize: 13, color: Colors.black54),
                           ),
+                          const SizedBox(height: 6),
+                          // Phòng
                           Text(
                             "Phòng: ${mon.phong}",
                             style: const TextStyle(
@@ -126,7 +200,7 @@ class _DiemDanhScreenState extends State<DiemDanhScreen> {
                           const SizedBox(height: 10),
                           Align(
                             alignment: Alignment.centerRight,
-                            child: _buildActionButton(context, mon.trangThai),
+                            child: _buildActionButton(context, mon),
                           ),
                         ],
                       ),
@@ -144,52 +218,53 @@ class _DiemDanhScreenState extends State<DiemDanhScreen> {
     );
   }
 
-// ===== NÚT HÀNH ĐỘNG =====
-  Widget _buildActionButton(BuildContext context, String trangThai) {
-    switch (trangThai) {
-      case "dung_gio":
+  Widget _buildActionButton(BuildContext context, BuoiHoc mon) {
+    final trangThaiBuoiHoc = mon.trangThai;
+
+    switch (trangThaiBuoiHoc) {
+      case TrangThaiBuoiHoc.chuaDenGio:
+        return const SizedBox();
+      case TrangThaiBuoiHoc.dangDienRa:
         return ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF154B71),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8)),
+            shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           ),
-          onPressed: () {
-            Navigator.push(
+          onPressed: () async {
+            // Chuyển sang màn hình DiemDanhQRScreen
+            final ketThuc = await Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const DiemDanhQRScreen(),
+                builder: (context) => DiemDanhQRScreen(buoiHoc: mon),
               ),
             );
+            // Nếu đã điểm danh xong, refresh danh sách
+            if (ketThuc == true) setState(() {});
           },
-          child: const Text("Bắt đầu điểm danh",
+          child: const Text("Điểm danh",
               style: TextStyle(fontSize: 13, color: Colors.white)),
         );
-
-      case "qua_gio":
+      case TrangThaiBuoiHoc.ketThuc:
         return ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF7B7B7B),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8)),
+            shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           ),
           onPressed: () {
-            // Chuyển sang màn hình kết quả điểm danh
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const KetQuaDiemDanhScreen(),
+                builder: (context) => KetQuaDiemDanhScreen(buoiHoc: mon),
               ),
             );
           },
           child: const Text("Xem kết quả điểm danh",
               style: TextStyle(fontSize: 13, color: Colors.white)),
         );
-
-      default:
-        return const SizedBox();
     }
   }
 }

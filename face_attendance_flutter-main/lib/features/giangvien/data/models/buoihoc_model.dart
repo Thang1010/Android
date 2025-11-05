@@ -1,5 +1,5 @@
-import 'chitiet_sv_diemdanh_model.dart';
 import 'sinhvien_model.dart';
+import 'chitiet_sv_diemdanh_model.dart';
 
 class BuoiHoc {
   // ===== Thông tin chung =====
@@ -58,7 +58,8 @@ class BuoiHoc {
       List<BuoiHoc> quanLyLop, List<BuoiHoc> lichDay) {
     return quanLyLop.map((lop) {
       final match = lichDay.firstWhere(
-            (b) => b.tenMon == lop.tenMon && b.lop == lop.lop && b.phong == lop.phong,
+            (b) =>
+        b.tenMon == lop.tenMon && b.lop == lop.lop && b.phong == lop.phong,
         orElse: () => BuoiHoc(
           tenMon: lop.tenMon,
           lop: lop.lop,
@@ -86,116 +87,52 @@ class BuoiHoc {
     }).toList();
   }
 
-  // =================== DỮ LIỆU MẪU QUẢN LÝ LỚP ===================
-  static final List<BuoiHoc> lichDayQuanLyLop = [
+  // =================== DỮ LIỆU BUỔI HỌC MẪU ===================
+  static final List<BuoiHoc> buoiHocMau = [
     BuoiHoc(
-      lop: "CNTT1",
       tenMon: "Lập trình Flutter",
+      lop: "CNTT1",
       phong: "B203",
       diemDanhHienTai: 20,
       tongSoBuoi: 45,
-      danhSachSinhVien: [
-        SinhVien(ma: "SV001", ten: "Nguyễn Văn A", lop: "CNTT1", trangThai: "present", soBuoiDiemDanh: 20),
-        SinhVien(ma: "SV002", ten: "Trần Thị B", lop: "CNTT1", trangThai: "absent", soBuoiDiemDanh: 15),
-      ],
-    ),
-    BuoiHoc(
-      lop: "CNTT2",
-      tenMon: "Cơ sở dữ liệu",
-      phong: "C101",
-      diemDanhHienTai: 12,
-      tongSoBuoi: 20,
-      danhSachSinhVien: [
-        SinhVien(ma: "SV003", ten: "Lê Văn C", lop: "CNTT2", trangThai: "late", soBuoiDiemDanh: 17),
-        SinhVien(ma: "SV004", ten: "Phạm Thị D", lop: "CNTT2", trangThai: "present", soBuoiDiemDanh: 20),
-      ],
-    ),
-  ];
-
-  // =================== DỮ LIỆU MẪU LỊCH DẠY (Dashboard) ===================
-  static final List<BuoiHoc> lichDayLichDayScreen = [
-    BuoiHoc(
-      lop: "CNTT1",
-      tenMon: "Lập trình Flutter",
-      phong: "B203",
       thoiGian: "07:00 - 09:00",
       ngay: DateTime(2025, 11, 4),
       ki: "Kì 1",
       namHoc: "2025-2026",
-      tuan: "Tuần 5",
-      tongSoBuoi: 45,
-      diemDanhHienTai: 20,
-      danhSachSinhVien: [
-        SinhVien(ma: "SV001", ten: "Nguyễn Văn A", lop: "CNTT1", trangThai: "present", soBuoiDiemDanh: 20),
-        SinhVien(ma: "SV002", ten: "Trần Thị B", lop: "CNTT1", trangThai: "absent", soBuoiDiemDanh: 15),
-      ],
+      tuan: "Tuần 1",
+      danhSachSinhVien: danhSachSinhVienMau
+          .where((sv) => sv.lop == "CNTT1")
+          .toList(),
       diemDanhChiTietCuaSV: {
-        "SV001": [
-          DiemDanhBuoiHocChiTiet(
-            monHoc: "Lập trình Flutter",
-            lop: "CNTT1",
-            ngay: DateTime(2025, 10, 1),
-            gio: DateTime(2025, 10, 1, 7, 5),
-            phong: "B203",
-            trangThai: "present",
-          ),
-          DiemDanhBuoiHocChiTiet(
-            monHoc: "Lập trình Flutter",
-            lop: "CNTT1",
-            ngay: DateTime(2025, 10, 3),
-            gio: DateTime(2025, 10, 3, 7, 10),
-            phong: "B203",
-            trangThai: "late",
-          ),
-        ],
-        "SV002": [
-          DiemDanhBuoiHocChiTiet(
-            monHoc: "Lập trình Flutter",
-            lop: "CNTT1",
-            ngay: DateTime(2025, 10, 1),
-            gio: DateTime(2025, 10, 1, 7, 5),
-            phong: "B203",
-            trangThai: "absent",
-          ),
-        ],
+        "SV001": danhSachSinhVienMau
+            .firstWhere((sv) => sv.ma == "SV001")
+            .diemDanhChiTiet,
+        "SV002": danhSachSinhVienMau
+            .firstWhere((sv) => sv.ma == "SV002")
+            .diemDanhChiTiet,
       },
     ),
     BuoiHoc(
-      lop: "CNTT2",
       tenMon: "Cơ sở dữ liệu",
+      lop: "CNTT2",
       phong: "C101",
-      thoiGian: "09:00 - 11:00",
+      diemDanhHienTai: 12,
+      tongSoBuoi: 20,
+      thoiGian: "15:00 - 24:00",
       ngay: DateTime(2025, 11, 5),
       ki: "Kì 1",
       namHoc: "2025-2026",
-      tuan: "Tuần 5",
-      tongSoBuoi: 20,
-      diemDanhHienTai: 12,
-      danhSachSinhVien: [
-        SinhVien(ma: "SV003", ten: "Lê Văn C", lop: "CNTT2", trangThai: "late", soBuoiDiemDanh: 17),
-        SinhVien(ma: "SV004", ten: "Phạm Thị D", lop: "CNTT2", trangThai: "present", soBuoiDiemDanh: 20),
-      ],
+      tuan: "Tuần 1",
+      danhSachSinhVien: danhSachSinhVienMau
+          .where((sv) => sv.lop == "CNTT2")
+          .toList(),
       diemDanhChiTietCuaSV: {
-        "SV003": [
-          DiemDanhBuoiHocChiTiet(
-            monHoc: "Cơ sở dữ liệu",
-            lop: "CNTT2",
-            ngay: DateTime(2025, 10, 2),
-            gio: DateTime(2025, 10, 2, 9, 0),
-            phong: "C101",
-            trangThai: "late",
-          ),
-        ],
-        "SV004": [
-          DiemDanhBuoiHocChiTiet(
-            monHoc: "Cơ sở dữ liệu",
-            lop: "CNTT2",
-            ngay: DateTime(2025, 10, 2),
-            gio: DateTime(2025, 10, 2, 9, 0),
-            phong: "C101",
-            trangThai: "present",
-          ),
-        ],
+        "SV003": danhSachSinhVienMau
+            .firstWhere((sv) => sv.ma == "SV003")
+            .diemDanhChiTiet,
+        "SV004": danhSachSinhVienMau
+            .firstWhere((sv) => sv.ma == "SV004")
+            .diemDanhChiTiet,
       },
     ),
   ];

@@ -4,6 +4,29 @@ import '../../gv_routes.dart';
 import '../widgets/giangvien_bottom_nav.dart';
 import '../widgets/gv_side_menu.dart';
 
+// ===== Hàm helper hiển thị thứ =====
+String getThu(DateTime? ngay) {
+  if (ngay == null) return "-";
+  switch (ngay.weekday) {
+    case DateTime.monday:
+      return "T2";
+    case DateTime.tuesday:
+      return "T3";
+    case DateTime.wednesday:
+      return "T4";
+    case DateTime.thursday:
+      return "T5";
+    case DateTime.friday:
+      return "T6";
+    case DateTime.saturday:
+      return "T7";
+    case DateTime.sunday:
+      return "CN";
+    default:
+      return "-";
+  }
+}
+
 class LichDayScreen extends StatefulWidget {
   final String giangVienId;
 
@@ -26,7 +49,7 @@ class _LichDayScreenState extends State<LichDayScreen> {
   final List<String> weeks = List.generate(10, (index) => 'Tuần ${index + 1}');
   DateTime selectedDate = DateTime.now();
 
-  // ✅ Dữ liệu từ model
+  // Dữ liệu từ model
   late List<BuoiHoc> lichDayHomNay;
   List<BuoiHoc> displayedBuoiHoc = [];
   bool isFilteringByDate = true;
@@ -39,7 +62,7 @@ class _LichDayScreenState extends State<LichDayScreen> {
     selectedYear = years.last;
 
     // Lấy dữ liệu từ model
-    lichDayHomNay = BuoiHoc.lichDayLichDayScreen;
+    lichDayHomNay = BuoiHoc.buoiHocMau;
 
     filterByDate(selectedDate);
   }
@@ -48,9 +71,9 @@ class _LichDayScreenState extends State<LichDayScreen> {
     isFilteringByDate = true;
     displayedBuoiHoc = lichDayHomNay
         .where((b) =>
-    b.ngay?.year == date.year &&
-        b.ngay?.month == date.month &&
-        b.ngay?.day == date.day)
+    parseNgay(b.ngay)?.year == date.year &&
+        parseNgay(b.ngay)?.month == date.month &&
+        parseNgay(b.ngay)?.day == date.day)
         .toList();
     setState(() => selectedDate = date);
   }
@@ -63,7 +86,28 @@ class _LichDayScreenState extends State<LichDayScreen> {
         b.namHoc == selectedYear &&
         b.tuan == selectedWeek)
         .toList();
+
+    // Cập nhật selectedDate theo ngày của buổi học đầu tiên (nếu có)
+    if (displayedBuoiHoc.isNotEmpty) {
+      final firstDate = parseNgay(displayedBuoiHoc.first.ngay);
+      if (firstDate != null) selectedDate = firstDate;
+    }
+
     setState(() {});
+  }
+
+  // Helper parse String/DateTime sang DateTime
+  DateTime? parseNgay(dynamic ngay) {
+    if (ngay == null) return null;
+    if (ngay is DateTime) return ngay;
+    if (ngay is String) {
+      try {
+        return DateTime.parse(ngay);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
   }
 
   List<DateTime> generateCalendarDays(DateTime month) {
@@ -165,7 +209,8 @@ class _LichDayScreenState extends State<LichDayScreen> {
                   style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF154B71)),
                   onPressed: filterByTermYearWeek,
-                  child: const Text("Lọc", style: TextStyle(color: Colors.white)),
+                  child:
+                  const Text("Lọc", style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
@@ -262,25 +307,47 @@ class _LichDayScreenState extends State<LichDayScreen> {
               },
             ),
           ),
-          // --- Danh sách buổi học ---
+          // --- Danh sách buổi học với Text "LỊCH HỌC" ---
           Expanded(
             child: displayedBuoiHoc.isEmpty
                 ? const Center(child: Text("Không có buổi học"))
-                : ListView.builder(
-                itemCount: displayedBuoiHoc.length,
-                itemBuilder: (context, index) {
-                  final b = displayedBuoiHoc[index];
-                  return Card(
-                    margin:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    child: ListTile(
-                      leading: const Icon(Icons.book, color: Color(0xFF154B71)),
-                      title: Text(b.tenMon),
-                      subtitle: Text(
-                          "${b.phong} | ${b.thoiGian ?? ''} | Lớp: ${b.lop}"),
+                : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Text(
+                    'Lịch học',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF154B71),
                     ),
-                  );
-                }),
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: displayedBuoiHoc.length,
+                    itemBuilder: (context, index) {
+                      final b = displayedBuoiHoc[index];
+                      final ngayBuoiHoc = parseNgay(b.ngay);
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        child: ListTile(
+                          leading:
+                          const Icon(Icons.book, color: Color(0xFF154B71)),
+                          title: Text(b.tenMon),
+                          subtitle: Text(
+                              "${b.phong} | Thứ: ${getThu(ngayBuoiHoc)} | ${b.thoiGian ?? ''} | Lớp: ${b.lop}"),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

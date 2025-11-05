@@ -22,42 +22,52 @@ class SinhVien {
   String get avatarOrDefault => avatar ?? 'assets/images/toandeptrai.jpg';
 }
 
-// =================== DỮ LIỆU MẪU ===================
-final List<SinhVien> danhSachSinhVien = [
+// =================== DỮ LIỆU MẪU SINH VIÊN ===================
+final List<SinhVien> danhSachSinhVienMau = [
   SinhVien(
-    ten: "Nguyễn Văn A",
     ma: "SV001",
-    lop: "64KTPM.NB",
-    trangThai: "present",
-    soBuoiDiemDanh: 18,
-    diemDanhChiTiet: diemDanhChiTietMau, // dùng danh sách mẫu
+    ten: "Nguyễn Văn A",
+    lop: "CNTT1",
+    trangThai: "Đúng giờ",
+    soBuoiDiemDanh: 20,
+    diemDanhChiTiet: [
+      DiemDanhBuoiHocChiTiet(
+        monHoc: "Lập trình Flutter",
+        lop: "CNTT1",
+        ngay: DateTime(2025, 10, 1),
+        gio: DateTime(2025, 10, 1, 7, 5),
+        phong: "B203",
+        trangThai: "Đúng giờ",
+      ),
+      DiemDanhBuoiHocChiTiet(
+        monHoc: "Lập trình Flutter",
+        lop: "CNTT1",
+        ngay: DateTime(2025, 10, 3),
+        gio: DateTime(2025, 10, 3, 7, 10),
+        phong: "B203",
+        trangThai: "Muộn",
+      ),
+    ],
   ),
   SinhVien(
-    ten: "Trần Thị B",
     ma: "SV002",
-    lop: "64CNTT",
-    trangThai: "absent",
+    ten: "Trần Thị B",
+    lop: "CNTT1",
+    trangThai: "Đúng giờ",
     soBuoiDiemDanh: 15,
   ),
   SinhVien(
-    ten: "Lê Văn C",
     ma: "SV003",
-    lop: "64CNTT",
-    trangThai: "late",
+    ten: "Lê Văn C",
+    lop: "CNTT2",
+    trangThai: "Muộn",
     soBuoiDiemDanh: 17,
   ),
   SinhVien(
-    ten: "Phạm Thị D",
     ma: "SV004",
-    lop: "CNTT1",
-    trangThai: "present",
+    ten: "Phạm Thị D",
+    lop: "CNTT2",
+    trangThai: "Đúng giờ",
     soBuoiDiemDanh: 20,
-  ),
-  SinhVien(
-    ten: "Ngô Thị E",
-    ma: "SV005",
-    lop: "64CNTT",
-    trangThai: "absent",
-    soBuoiDiemDanh: 14,
   ),
 ];

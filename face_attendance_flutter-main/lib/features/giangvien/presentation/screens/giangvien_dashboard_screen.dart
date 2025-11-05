@@ -7,6 +7,7 @@ import 'diemdanh_qr_screen.dart';
 import 'lichday_screen.dart';
 import 'quanlylop_screen.dart';
 import 'thongke_screen.dart';
+import 'thongtinlop_screen.dart';
 
 class GiangVienDashboardScreen extends StatefulWidget {
   const GiangVienDashboardScreen({super.key});
@@ -26,9 +27,9 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
   void initState() {
     super.initState();
     gvHienTai = currentGV;
-    lichDayHomNay = BuoiHoc.lichDayLichDayScreen;
+    lichDayHomNay = BuoiHoc.buoiHocMau;
 
-    // Timer cập nhật trạng thái mỗi giây
+    // Cập nhật trạng thái buổi học realtime
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
@@ -40,7 +41,7 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
     super.dispose();
   }
 
-  // Chuyển "07:00-08:30" -> DateTime bắt đầu và kết thúc
+  // --- Tách giờ bắt đầu/kết thúc từ chuỗi "07:00-08:30"
   List<DateTime> _parseTimeRange(String thoiGian, DateTime ngay) {
     try {
       final parts = thoiGian.split('-');
@@ -57,7 +58,7 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
     }
   }
 
-  // Xác định màu trạng thái buổi học
+  // --- Xác định màu trạng thái buổi học ---
   Color _getStatusColor(BuoiHoc buoi) {
     if (buoi.thoiGian == null || buoi.ngay == null) return Colors.grey;
     final times = _parseTimeRange(buoi.thoiGian!, buoi.ngay!);
@@ -112,7 +113,7 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
     );
   }
 
-  // --- THÔNG TIN GIÁO VIÊN ---
+  // --- THÔNG TIN GIẢNG VIÊN ---
   Widget _buildTeacherInfo() {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -142,7 +143,7 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
     );
   }
 
-// --- LỊCH DẠY HÔM NAY ---
+  // --- LỊCH DẠY HÔM NAY ---
   Widget _buildTodaySchedule() {
     final today = DateTime.now();
     final lichHomNay = lichDayHomNay.where((buoi) {
@@ -155,7 +156,6 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
     const double itemHeight = 77.0;
     const double maxVisibleItems = 3;
 
-    // Định dạng ngày hôm nay
     final formattedDate =
         "${today.day.toString().padLeft(2, '0')}/"
         "${today.month.toString().padLeft(2, '0')}/"
@@ -171,7 +171,6 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Tiêu đề + ngày hôm nay
           Row(
             children: [
               const Text(
@@ -206,21 +205,16 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: lichHomNay.map((buoi) {
-                  Color statusColor;
+                  final statusColor = _getStatusColor(buoi);
                   String statusText;
-                  if (buoi.thoiGian != null && buoi.ngay != null) {
-                    statusColor = _getStatusColor(buoi);
-                    if (statusColor == Colors.green) {
-                      statusText = "Đang diễn ra";
-                    } else if (statusColor == Colors.red) {
-                      statusText = "Đã kết thúc";
-                    } else {
-                      statusText = "Sắp diễn ra";
-                      statusColor = Colors.orange;
-                    }
+                  if (statusColor == Colors.green) {
+                    statusText = "Đang diễn ra";
+                  } else if (statusColor == Colors.red) {
+                    statusText = "Đã kết thúc";
+                  } else if (statusColor == Colors.yellow) {
+                    statusText = "Sắp diễn ra";
                   } else {
                     statusText = "Chưa xác định";
-                    statusColor = Colors.grey;
                   }
 
                   return Container(
@@ -233,10 +227,9 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Dòng 1: Tên môn - Lớp và trạng thái sát phải
                         Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               "${buoi.tenMon} - ${buoi.lop}",
@@ -249,7 +242,8 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
                                 Container(
                                   width: 10,
                                   height: 10,
-                                  margin: const EdgeInsets.only(right: 6),
+                                  margin:
+                                  const EdgeInsets.only(right: 6),
                                   decoration: BoxDecoration(
                                     color: statusColor,
                                     shape: BoxShape.circle,
@@ -267,18 +261,12 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
                           ],
                         ),
                         const SizedBox(height: 4),
-                        // Dòng 2: Giờ
-                        Text(
-                          buoi.thoiGian ?? '',
-                          style: const TextStyle(fontSize: 13),
-                        ),
+                        Text(buoi.thoiGian ?? '',
+                            style: const TextStyle(fontSize: 13)),
                         const SizedBox(height: 4),
-                        // Dòng 3: Phòng
-                        Text(
-                          "Phòng ${buoi.phong}",
-                          style: const TextStyle(
-                              fontSize: 13, color: Colors.black54),
-                        ),
+                        Text("Phòng ${buoi.phong}",
+                            style: const TextStyle(
+                                fontSize: 13, color: Colors.black54)),
                       ],
                     ),
                   );
@@ -291,7 +279,6 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
     );
   }
 
-
   // --- GRID CHỨC NĂNG ---
   Widget _buildFeatureGrid(BuildContext context) {
     final List<Map<String, dynamic>> features = [
@@ -299,7 +286,6 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
         "icon": Icons.qr_code_2,
         "title": "Điểm danh",
         "buttonText": "Bắt đầu điểm danh",
-        "screen": const DiemDanhQRScreen(),
       },
       {
         "icon": Icons.calendar_today_outlined,
@@ -311,7 +297,6 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
         "icon": Icons.people_outline,
         "title": "Quản lý lớp",
         "buttonText": "Chi tiết lớp học",
-        "screen": const QuanLyLopScreen(giangVienId: 'GV001'),
       },
       {
         "icon": Icons.bar_chart_outlined,
@@ -338,24 +323,20 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
           item["icon"],
           item["title"],
           item["buttonText"],
-          item["screen"],
         );
       },
     );
   }
 
-  Widget _featureCard(BuildContext context, IconData icon, String title,
-      String buttonText, Widget screen) {
+  // --- CARD CHỨC NĂNG ---
+  Widget _featureCard(
+      BuildContext context, IconData icon, String title, String buttonText) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: Offset(2, 2),
-          ),
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(2, 2)),
         ],
       ),
       padding: const EdgeInsets.all(12),
@@ -363,31 +344,77 @@ class _GiangVienDashboardScreenState extends State<GiangVienDashboardScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Icon(icon, color: const Color(0xFF154B71), size: 40),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
+          Text(title,
+              textAlign: TextAlign.center,
+              style:
+              const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => screen),
-                );
+                final now = DateTime.now();
+
+                if (title == "Điểm danh") {
+                  final buoiHienTai = lichDayHomNay.firstWhere(
+                        (b) {
+                      if (b.thoiGian == null || b.ngay == null) return false;
+                      final times = _parseTimeRange(b.thoiGian!, b.ngay!);
+                      if (times.length < 2) return false;
+                      return now.isAfter(times[0]) && now.isBefore(times[1]);
+                    },
+                    orElse: () => BuoiHoc(
+                      tenMon: "Không có lớp diễn ra",
+                      lop: "N/A",
+                      phong: "N/A",
+                      thoiGian: "N/A",
+                      ngay: DateTime.now(),
+                    ),
+                  );
+
+                  if (buoiHienTai.tenMon == "Không có lớp diễn ra") {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                            "Hiện không có lớp nào đang diễn ra — mở danh sách lớp."),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                    return;
+                  }
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => DiemDanhQRScreen(buoiHoc: buoiHienTai),
+                    ),
+                  );
+                } else if (title == "Quản lý lớp") {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                      const QuanLyLopScreen(giangVienId: 'GV001'),
+                    ),
+                  );
+                } else if (title == "Lịch dạy" || title == "Thống kê") {
+                  // Các screen đã khai báo sẵn
+                  final screen = (title == "Lịch dạy")
+                      ? const LichDayScreen(giangVienId: 'GV001')
+                      : const ThongKeScreen(giangVienId: 'GV001');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => screen),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF154B71),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                    borderRadius: BorderRadius.circular(8)),
               ),
-              child: Text(
-                buttonText,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-              ),
+              child: Text(buttonText,
+                  style: const TextStyle(color: Colors.white, fontSize: 14)),
             ),
           ),
         ],

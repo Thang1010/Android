@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/giangvien_bottom_nav.dart';
 import '../widgets/gv_side_menu.dart';
 import '../../data/models/thongke_model.dart';
+import '../../data/models/buoihoc_model.dart';
 import 'giangvien_dashboard_screen.dart';
 import 'diemdanh_qr_screen.dart';
 import 'lichday_screen.dart';
@@ -20,6 +21,23 @@ class _ThongKeScreenState extends State<ThongKeScreen> {
   int _selectedIndex = 4;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String selectedKhoa = "Tất cả"; // Dropdown mặc định
+
+  // --- Hàm parse giờ bắt đầu/kết thúc ---
+  List<DateTime> _parseTimeRange(String thoiGian, DateTime ngay) {
+    try {
+      final parts = thoiGian.split('-');
+      if (parts.length != 2) return [];
+      final startParts = parts[0].split(':').map(int.parse).toList();
+      final endParts = parts[1].split(':').map(int.parse).toList();
+      final start = DateTime(
+          ngay.year, ngay.month, ngay.day, startParts[0], startParts[1]);
+      final end = DateTime(
+          ngay.year, ngay.month, ngay.day, endParts[0], endParts[1]);
+      return [start, end];
+    } catch (_) {
+      return [];
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -41,9 +59,37 @@ class _ThongKeScreenState extends State<ThongKeScreen> {
         );
         break;
       case 2:
+      // Lấy buổi học hiện tại
+        final now = DateTime.now();
+        final buoiHienTai = BuoiHoc.buoiHocMau.firstWhere(
+              (b) {
+            if (b.thoiGian == null || b.ngay == null) return false;
+            final times = _parseTimeRange(b.thoiGian!, b.ngay!);
+            if (times.length < 2) return false;
+            return now.isAfter(times[0]) && now.isBefore(times[1]);
+          },
+          orElse: () => BuoiHoc(
+            tenMon: "Không có lớp diễn ra",
+            lop: "N/A",
+            phong: "N/A",
+            thoiGian: "N/A",
+            ngay: DateTime.now(),
+          ),
+        );
+
+        if (buoiHienTai.tenMon == "Không có lớp diễn ra") {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text("Hiện không có lớp nào đang diễn ra.")),
+          );
+          return;
+        }
+
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const DiemDanhQRScreen()),
+          MaterialPageRoute(
+            builder: (_) => DiemDanhQRScreen(buoiHoc: buoiHienTai),
+          ),
         );
         break;
       case 3:
@@ -99,89 +145,91 @@ class _ThongKeScreenState extends State<ThongKeScreen> {
           )
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ===== Thống kê tổng quan =====
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: statData
-                  .map((e) =>
-                  StatCard(title: e.title, value: e.value, icon: e.icon))
-                  .toList(),
-            ),
-            const SizedBox(height: 24),
-
-            // ===== Dropdown chọn môn/kỳ =====
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Chọn môn/kỳ:",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                DropdownButton<String>(
-                  value: selectedKhoa,
-                  items: ["Tất cả", "Lập trình", "CSDL", "Web", "Dự án", "Mạng", "AI"]
-                      .map((e) => DropdownMenuItem(
-                    value: e,
-                    child: Text(e),
-                  ))
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        selectedKhoa = value;
-                      });
-                    }
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // ===== Biểu đồ cột ngang: tên môn - điểm int - thanh tỷ lệ =====
-            Column(
-              children: filteredBarData
-                  .map((item) => _InteractiveBar(item: item))
-                  .toList(),
-            ),
-            const SizedBox(height: 24),
-
-            // Nhận xét tổng quan
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.15),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Column(
+      body: Column(
+        children: [
+          // Phần scrollable: dropdown + biểu đồ
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Nhận xét tổng quan",
-                      style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  SizedBox(height: 8),
-                  Text(
-                    "Điểm trung bình các lớp khá đồng đều, dao động từ 7.4–8.7. "
-                        "Một số môn như AI & ML có kết quả tốt nhất, trong khi môn Dự án cần cải thiện thêm.",
-                    style: TextStyle(color: Colors.black87, height: 1.4),
+                  // ===== Thống kê tổng quan =====
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: statData
+                        .map((e) =>
+                        StatCard(title: e.title, value: e.value, icon: e.icon))
+                        .toList(),
                   ),
+                  const SizedBox(height: 24),
+
+                  // ===== Dropdown chọn môn/kỳ =====
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text("Chọn môn/kỳ:",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      DropdownButton<String>(
+                        value: selectedKhoa,
+                        items: ["Tất cả", "Lập trình", "CSDL", "Web", "Dự án", "Mạng", "AI"]
+                            .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(e),
+                        ))
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              selectedKhoa = value;
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ===== Biểu đồ cột ngang =====
+                  Column(
+                    children: filteredBarData
+                        .map((item) => _InteractiveBar(item: item))
+                        .toList(),
+                  ),
+                  const SizedBox(height: 80), // tạo khoảng trống cho nút ở dưới
                 ],
               ),
             ),
-            const SizedBox(height: 24),
-          ],
-        ),
+          ),
+
+          // ===== Nút xuất báo cáo tổng quan =====
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text(
+                            "Chức năng xuất báo cáo tổng quan đang được phát triển...")),
+                  );
+                },
+                icon: const Icon(Icons.file_download),
+                label: const Text("Xuất báo cáo tổng quan"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6FBF73), // xanh lá phù hợp
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: GiangVienBottomNav(
         currentIndex: _selectedIndex,
@@ -233,7 +281,7 @@ class StatCard extends StatelessWidget {
   }
 }
 
-// ===== WIDGET: Thanh bar tương tác hiển thị điểm thực tế với vạch tối đa =====
+// ===== WIDGET: Thanh bar tương tác =====
 class _InteractiveBar extends StatefulWidget {
   final BarChartItem item;
   const _InteractiveBar({super.key, required this.item});
@@ -250,27 +298,22 @@ class _InteractiveBarState extends State<_InteractiveBar> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // Tên môn
         SizedBox(
           width: 120,
           child: Text(widget.item.label,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
         ),
         const SizedBox(width: 8),
-
-        // Điểm làm tròn (không hiển thị popup)
         SizedBox(
           width: 30,
           child: Text("${widget.item.value.floor()}",
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
         ),
         const SizedBox(width: 8),
-
-        // Thanh màu + thanh nền + vạch tối đa
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final barWidth = constraints.maxWidth; // chiều rộng thực tế của thanh
+              final barWidth = constraints.maxWidth;
               final valuePosition = widget.item.value / 10 * barWidth;
 
               return GestureDetector(
@@ -286,7 +329,6 @@ class _InteractiveBarState extends State<_InteractiveBar> {
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    // Thanh nền (mức tối đa)
                     Container(
                       height: 18,
                       decoration: BoxDecoration(
@@ -294,7 +336,6 @@ class _InteractiveBarState extends State<_InteractiveBar> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    // Thanh điểm thực tế
                     Container(
                       width: valuePosition,
                       height: 18,
@@ -303,9 +344,8 @@ class _InteractiveBarState extends State<_InteractiveBar> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    // Vạch đỏ biểu thị điểm tối đa 10
                     Positioned(
-                      left: barWidth - 2, // đúng cuối thanh nền
+                      left: barWidth - 2,
                       top: 0,
                       bottom: 0,
                       child: Container(
@@ -313,7 +353,6 @@ class _InteractiveBarState extends State<_InteractiveBar> {
                         color: Colors.redAccent,
                       ),
                     ),
-                    // Popup hiển thị điểm
                     if (showValue)
                       Positioned(
                         left: tapPosition,

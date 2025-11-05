@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../gv_routes.dart';
+import '../../data/models/buoihoc_model.dart';
 
 class GVSideMenu extends StatelessWidget {
   final String giangVienId;
+  final BuoiHoc? buoiHoc; // Buổi học hiện tại cho Điểm danh QR
   final VoidCallback onClose;
 
   const GVSideMenu({
     super.key,
     required this.giangVienId,
+    this.buoiHoc,
     required this.onClose,
   });
 
@@ -76,24 +79,12 @@ class GVSideMenu extends StatelessWidget {
         ),
       ),
       onTap: () {
-        // Chỉ đóng Drawer bằng onClose
+        // Đóng Drawer
         onClose();
 
         // Hàm điều hướng an toàn
         void safeNavigate(String routeName, {Map<String, dynamic>? arguments}) {
-          final builder = GvRoutes.routes[routeName];
-          if (builder == null) return;
-
-          final route = MaterialPageRoute(
-            builder: builder,
-            settings: RouteSettings(arguments: arguments),
-          );
-
-          if (Navigator.canPop(context)) {
-            Navigator.pushReplacement(context, route);
-          } else {
-            Navigator.push(context, route);
-          }
+          GvRoutes.navigate(context, routeName, arguments: arguments);
         }
 
         switch (title) {
@@ -101,12 +92,19 @@ class GVSideMenu extends StatelessWidget {
             safeNavigate(GvRoutes.dashboard, arguments: {"giangVienId": giangVienId});
             break;
           case "Lịch dạy":
-            if (ModalRoute.of(context)?.settings.name != GvRoutes.lichday) {
-              safeNavigate(GvRoutes.lichday, arguments: {"giangVienId": giangVienId});
-            }
+            safeNavigate(GvRoutes.lichday, arguments: {"giangVienId": giangVienId});
             break;
           case "Điểm danh":
-            safeNavigate(GvRoutes.diemdanhQR, arguments: {"giangVienId": giangVienId});
+            if (buoiHoc != null) {
+              // Nếu có buoiHoc hiện tại, truyền vào QR screen
+              safeNavigate(GvRoutes.diemdanhQR, arguments: {"buoiHoc": buoiHoc});
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text(
+                        "Hiện không có buổi học đang diễn ra để điểm danh")),
+              );
+            }
             break;
           case "Quản lý lớp":
             safeNavigate(GvRoutes.quanlylop, arguments: {"giangVienId": giangVienId});

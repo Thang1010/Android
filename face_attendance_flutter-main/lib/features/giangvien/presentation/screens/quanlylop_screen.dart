@@ -21,7 +21,7 @@ class _QuanLyLopScreenState extends State<QuanLyLopScreen> {
   @override
   Widget build(BuildContext context) {
     // Lọc danh sách lớp theo từ khóa tìm kiếm
-    final filteredClasses = BuoiHoc.lichDayQuanLyLop.where((buoi) {
+    final filteredClasses = BuoiHoc.buoiHocMau.where((buoi) {
       return buoi.lop.toLowerCase().contains(searchText.toLowerCase()) ||
           buoi.tenMon.toLowerCase().contains(searchText.toLowerCase());
     }).toList();

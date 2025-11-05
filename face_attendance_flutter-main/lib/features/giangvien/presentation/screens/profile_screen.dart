@@ -93,7 +93,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     infoList: [
                       {"label": "Học vị", "value": currentGV.hocVi},
                       {"label": "Chuyên ngành", "value": currentGV.chuyenNganh},
-                      {"label": "Kinh nghiệm", "value": currentGV.kinhNghiem},
                     ],
                   ),
                   const SizedBox(height: 10),

@@ -24,7 +24,7 @@ final List<DiemDanhBuoiHocChiTiet> diemDanhChiTietMau = [
     ngay: DateTime(2025, 10, 1),
     gio: DateTime(2025, 10, 1, 7, 5), // giờ điểm danh thực tế
     phong: "325 - A2",
-    trangThai: "present",
+    trangThai: "đúng giờ",
   ),
   DiemDanhBuoiHocChiTiet(
     monHoc: "Lập trình Android",
@@ -32,7 +32,7 @@ final List<DiemDanhBuoiHocChiTiet> diemDanhChiTietMau = [
     ngay: DateTime(2025, 10, 3),
     gio: DateTime(2025, 10, 3, 7, 10),
     phong: "325 - A2",
-    trangThai: "late",
+    trangThai: "Đi muộn",
   ),
   DiemDanhBuoiHocChiTiet(
     monHoc: "Lập trình Android",
@@ -40,7 +40,7 @@ final List<DiemDanhBuoiHocChiTiet> diemDanhChiTietMau = [
     ngay: DateTime(2025, 10, 5),
     gio: DateTime(2025, 10, 5, 7, 0),
     phong: "325 - A2",
-    trangThai: "absent",
+    trangThai: "Đúng giờ",
   ),
   DiemDanhBuoiHocChiTiet(
     monHoc: "Lập trình Android",
@@ -48,7 +48,7 @@ final List<DiemDanhBuoiHocChiTiet> diemDanhChiTietMau = [
     ngay: DateTime(2025, 10, 8),
     gio: DateTime(2025, 10, 8, 7, 2),
     phong: "325 - A2",
-    trangThai: "present",
+    trangThai: "Vắng",
   ),
   // ... bạn có thể thêm nhiều buổi khác
 ];

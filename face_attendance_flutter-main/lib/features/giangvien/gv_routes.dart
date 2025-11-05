@@ -6,6 +6,7 @@ import 'presentation/screens/lichday_screen.dart';
 import 'presentation/screens/quanlylop_screen.dart';
 import 'presentation/screens/profile_screen.dart';
 import 'presentation/screens/thongke_screen.dart';
+import 'data/models/buoihoc_model.dart';
 
 class GvRoutes {
   static const String dashboard = '/giangvien/dashboard';
@@ -16,10 +17,10 @@ class GvRoutes {
   static const String profile = '/giangvien/profile';
   static const String thongke = '/giangvien/thongke';
 
-  static Map<String, WidgetBuilder> routes = {
+  // Các route tĩnh không cần tham số
+  static Map<String, WidgetBuilder> staticRoutes = {
     dashboard: (_) => const GiangVienDashboardScreen(),
     diemdanh: (_) => const DiemDanhScreen(),
-    diemdanhQR: (_) => const DiemDanhQRScreen(),
     lichday: (_) => const LichDayScreen(giangVienId: 'GV001'),
     quanlylop: (_) => const QuanLyLopScreen(giangVienId: 'GV001'),
     profile: (_) => const ProfileScreen(giangVienId: 'GV001'),
@@ -27,25 +28,42 @@ class GvRoutes {
   };
 
   // --------------------------- HÀM NAVIGATE ---------------------------
-  static void navigate(BuildContext context, String route, {Map<String, dynamic>? arguments}) {
+  /// [arguments] có thể truyền tham số động, ví dụ buoiHoc cho DiemDanhQRScreen
+  static void navigate(BuildContext context, String route,
+      {Map<String, dynamic>? arguments}) {
     Navigator.pop(context); // đóng Drawer trước khi điều hướng
 
-    if (routes.containsKey(route)) {
+    if (route == diemdanhQR) {
+      // Buộc phải có buoiHoc
+      final BuoiHoc? buoiHoc = arguments?['buoiHoc'];
+      if (buoiHoc != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DiemDanhQRScreen(buoiHoc: buoiHoc),
+          ),
+        );
+      } else {
+        // Nếu thiếu buoiHoc, fallback về dashboard
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Không tìm thấy buổi học để điểm danh!")),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const GiangVienDashboardScreen()),
+        );
+      }
+    } else if (staticRoutes.containsKey(route)) {
+      final builder = staticRoutes[route]!;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (context) {
-            final builder = routes[route]!;
-            return builder(context);
-          },
-          settings: RouteSettings(arguments: arguments),
-        ),
+        MaterialPageRoute(builder: builder),
       );
     } else {
-      // Nếu route không tồn tại, fallback về dashboard
+      // fallback nếu route không tồn tại
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const GiangVienDashboardScreen()),
+        MaterialPageRoute(builder: (_) => const GiangVienDashboardScreen()),
       );
     }
   }

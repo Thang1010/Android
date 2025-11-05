@@ -6,7 +6,6 @@
     final String sdt;
     final String hocVi;
     final String chuyenNganh;
-    final String kinhNghiem;
     final String gioiThieu;
     final String avatarPath;
 
@@ -18,7 +17,6 @@
       required this.sdt,
       required this.hocVi,
       required this.chuyenNganh,
-      required this.kinhNghiem,
       required this.gioiThieu,
       required this.avatarPath,
     });
@@ -33,7 +31,6 @@
     sdt: "0987 654 321",
     hocVi: "Thạc sĩ",
     chuyenNganh: "Phát triển phần mềm",
-    kinhNghiem: "8 năm",
     gioiThieu:
     "Giảng viên có nhiều năm kinh nghiệm giảng dạy các môn Lập trình Android, Phát triển phần mềm và Quản lý dự án CNTT.",
     avatarPath: "assets/images/teacher.jpg",
